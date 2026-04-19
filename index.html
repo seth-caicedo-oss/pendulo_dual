@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Simulador Dual - Unicórdoba</title>
+    <style>
+        /* Fondo verde suave con profundidad */
+        body { 
+            font-family: 'Segoe UI', Tahoma, sans-serif; 
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); 
+            background-attachment: fixed;
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+        }
+        
+        
+		
+		        /* Encabezado Institucional */
+        .header { width: 100%; background: white; padding: 10px 0; display: flex; justify-content: center; align-items: center; border-bottom: 5px solid #00693e; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .logo-uni { height: 70px; margin-right: 20px; }
+        .header-text h1 { margin: 0; color: #00693e; font-size: 1.6em; }
+		.header-text h1 { margin: 0; color: #00693e; font-size: 1.25em; }
+        .header-text p { margin: 0; color: #666; font-size: 0.9em; }
+		
+		.main-container { display: flex; gap: 20px; max-width: 1150px; width: 95%; margin-top: 20px; padding-bottom: 30px; }
+		
+
+     
+        .panel { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.08); flex: 1; }
+        .visual { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.08); flex: 1.5; display: flex; flex-direction: column; align-items: center; position: relative; }
+        
+        h2 { color: #00693e; font-size: 1.3em; border-bottom: 2px solid #f0f0f0; padding-bottom: 8px; margin-top: 0; }
+        .input-group { margin-bottom: 12px; }
+        label { display: block; font-size: 0.85em; color: #555; margin-bottom: 4px; font-weight: bold; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; background: #fafafa; }
+        
+        .btn-main { width: 100%; padding: 14px; background: #00693e; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; transition: 0.2s; }
+        .btn-main:hover { background: #004d2e; }
+
+        .controls-row { display: flex; gap: 10px; margin-top: 15px; justify-content: center; width: 100%; }
+        .btn-ctrl { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-size: 1.1em; color: #00693e; }
+        .btn-ctrl:hover { background: #e8f5e9; }
+
+        #results-box { margin-top: 20px; padding: 15px; background: #f9fdfb; border: 1px solid #e0e0e0; border-left: 5px solid #00693e; border-radius: 4px; font-size: 0.9em; }
+
+        /* Barras de Energía Estables */
+        .energy-bars { display: flex; gap: 35px; margin-top: 20px; justify-content: center; width: 100%; }
+        .bar-wrapper { display: flex; flex-direction: column; align-items: center; width: 70px; }
+        .pct-val { font-size: 12px; font-weight: bold; color: #555; margin-bottom: 5px; height: 15px; }
+        .bar-container { width: 40px; height: 130px; background: #eee; border-radius: 6px; position: relative; overflow: hidden; border: 1px solid #ccc; box-shadow: inset 0 2px 5px rgba(0,0,0,0.1); }
+        .bar-fill { position: absolute; bottom: 0; left: 0; width: 100%; transition: height 0.05s linear; }
+        .u-fill { background: #ffa726; }
+        .k-fill { background: #29b6f6; }
+        .e-fill { background: #66bb6a; }
+        .joule-val { font-size: 11px; font-weight: bold; color: #333; margin-top: 5px; height: 15px; }
+        .label-val { font-size: 11px; color: #777; margin-top: 2px; }
+
+        canvas { border: 1px solid #ddd; border-radius: 8px; width: 100%; background: #fff; }
+        #pendulumCanvas { height: 350px; }
+        #waveCanvas { height: 140px; margin-top: 15px; background: #fafafa; }
+        .angle-monitor { position: absolute; top: 35px; right: 35px; background: #333; color: #0f0; padding: 5px 10px; border-radius: 5px; font-family: monospace; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+	<img src="logo.png" alt="Unicórdoba" class="logo-uni">
+    <div class="header-text">
+		<h1 style="margin:0; font-size: 1.6em;">Física IV: Practica de Laboratorio</h1>
+        <h1 style="margin:0; font-size: 1.25em;">Simulador Interactivo : Péndulo Físico y Péndulo Simple</h1>
+        <p style="margin:0; font-size: 0.9em;">Universidad de Córdoba | Departamento de Física y Electrónica</p>
+    </div>
+</div>
+
+<div class="main-container">
+    <div class="panel">
+        <button class="btn-main" style="background:#fff; color:#00693e; border: 2px solid #00693e; margin-bottom:20px;" onclick="switchMode()">🔄 Cambiar a Péndulo Simple</button>
+        
+        <h2 id="mode-title">Parámetros: Péndulo Físico</h2>
+        
+        <div class="input-group"><label id="lbl-m">Masa (m) [kg]:</label><input type="number" id="input_m" value="0.50" step="0.01"></div>
+        <div class="input-group"><label id="lbl-L">Longitud / Radio (L/R) [m]:</label><input type="number" id="input_L" value="1.00" step="0.1"></div>
+        
+        <div class="input-group" id="group-b">
+            <label>Punto de suspensión (b) [m]:</label>
+            <input type="number" id="input_b" value="0.30" step="0.05">
+        </div>
+
+        <div class="input-group"><label>Ángulo Inicial (θ₀) [grados]:</label><input type="number" id="input_ang" value="40" step="1"></div>
+        
+        <div class="input-group" id="group-forma">
+            <label>Forma del Cuerpo (Físico):</label>
+            <select id="shape" onchange="updateCalculations()">
+                <option value="barra">Varilla </option>
+                <option value="disco">Disco Sólido</option>
+                <option value="anillo">Anillo / Aro</option>
+            </select>
+        </div>
+		
+		<div class="input-group">
+    <label>Velocidad de Simulación:</label>
+    <select id="simSpeed">
+        <option value="0.1">0.1x (Cámara Súper Lenta)</option>
+        <option value="0.5">0.5x (Cámara Lenta)</option>
+        <option value="1.0" selected>1.0x (Velocidad Normal)</option>
+        <option value="1.5">1.5x (Cámara Rápida)</option>
+        <option value="2.0">2.0x (Cámara Súper Rápida)</option>
+    </select>
+</div>
+
+        <div class="input-group" style="display: flex; align-items: center; gap: 8px;">
+            <input type="checkbox" id="trail" checked style="width: auto;">
+            <label style="margin:0; cursor:pointer;" for="trail">Mostrar Rastro Progresivo</label>
+        </div>
+
+        <button class="btn-main" onclick="updateCalculations()">Reiniciar y Aplicar</button>
+
+        <div class="controls-row">
+            <button class="btn-ctrl" onclick="adjustTime(-0.1)">⏪</button>
+            <button class="btn-ctrl" id="playPause" onclick="togglePause()">⏸</button>
+            <button class="btn-ctrl" onclick="adjustTime(0.1)">⏩</button>
+        </div>
+
+        <div id="results-box">
+            <h4 style="margin-top:0; margin-bottom: 5px; color:#00693e;">Análisis:</h4>
+            <div id="results-text"></div>
+        </div>
+    </div>
+
+    <div class="visual">
+        <div class="angle-monitor" id="angle-display">θ: 0.0°</div>
+        <canvas id="pendulumCanvas" width="500" height="350"></canvas>
+        <canvas id="waveCanvas" width="500" height="140"></canvas>
+        
+        <div class="energy-bars">
+            <div class="bar-wrapper">
+                <div class="pct-val" id="u-pct">0%</div>
+                <div class="bar-container"><div id="u-bar" class="bar-fill u-fill"></div></div>
+                <div class="joule-val" id="u-val">0.00 J</div>
+                <div class="label-val">U (E.Potencial)</div>
+            </div>
+            <div class="bar-wrapper">
+                <div class="pct-val" id="k-pct">0%</div>
+                <div class="bar-container"><div id="k-bar" class="bar-fill k-fill"></div></div>
+                <div class="joule-val" id="k-val">0.00 J</div>
+                <div class="label-val">K (E.Cinética)</div>
+            </div>
+            <div class="bar-wrapper">
+                <div class="pct-val" id="e-pct">100%</div>
+                <div class="bar-container"><div id="e-bar" class="bar-fill e-fill" style="height: 100%;"></div></div>
+                <div class="joule-val" id="e-val">0.00 J</div>
+                <div class="label-val">E (E.Total)</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer style="margin-top: 30px; padding: 20px; text-align: center; color: #555; font-size: 0.9em; width: 100%;">
+    <p><strong>Desarrollado por:</strong> Seth Ledesma Caicedo Doria, Fabiola Pico Cárdenas, María Paula Pomares García & María Angélica López Narváez</p>
+    <p>Universidad de Córdoba | Departamento de Física y Electrónica | 2026-I</p>
+</footer>
+
+<script>
+    const pCanvas = document.getElementById('pendulumCanvas');
+    const pCtx = pCanvas.getContext('2d');
+    const wCanvas = document.getElementById('waveCanvas');
+    const wCtx = wCanvas.getContext('2d');
+
+    let mode = 0; // 0: Físico, 1: Simple
+    let paused = false;
+    let m, L, b, I, T, maxE;
+    let angle = 0, angleVel = 0;
+    let history = [], trail = [];
+    const g = 9.81;
+
+    function switchMode() {
+        let btn = document.querySelector('button[onclick="switchMode()"]');
+        if (mode === 0) {
+            mode = 1;
+            btn.innerHTML = "🔄 Cambiar a Péndulo Físico";
+            document.getElementById('mode-title').innerText = "Parámetros: Péndulo Simple";
+            document.getElementById('group-b').style.display = "none";
+            document.getElementById('group-forma').style.display = "none";
+            document.getElementById('lbl-m').innerText = "Masa de la Pesa (m) [kg]:";
+            document.getElementById('lbl-L').innerText = "Longitud de la Cuerda (L) [m]:";
+        } else {
+            mode = 0;
+            btn.innerHTML = "🔄 Cambiar a Péndulo Simple";
+            document.getElementById('mode-title').innerText = "Parámetros: Péndulo Físico";
+            document.getElementById('group-b').style.display = "block";
+            document.getElementById('group-forma').style.display = "block";
+            document.getElementById('lbl-m').innerText = "Masa del Cuerpo (m) [kg]:";
+            document.getElementById('lbl-L').innerText = "Longitud / Radio (L/R) [m]:";
+        }
+        updateCalculations();
+    }
+
+    function togglePause() {
+        paused = !paused;
+        document.getElementById('playPause').innerText = paused ? "▶" : "⏸";
+    }
+
+    function adjustTime(val) { angle += val; }
+
+    function updateCalculations() {
+        history = []; 
+        trail = []; 
+        angleVel = 0;
+        
+        m = parseFloat(document.getElementById('input_m').value);
+        L = parseFloat(document.getElementById('input_L').value);
+        let angDeg = parseFloat(document.getElementById('input_ang').value);
+        angle = angDeg * (Math.PI / 180);
+
+        let resultsHtml = "";
+
+        if(mode === 0) {
+            b = parseFloat(document.getElementById('input_b').value);
+            let shape = document.getElementById('shape').value;
+            let Icm = 0;
+            
+            if (shape === 'barra') Icm = (1/12) * m * Math.pow(L, 2);
+            else if (shape === 'disco') Icm = (1/2) * m * Math.pow(L, 2);
+            else if (shape === 'anillo') Icm = m * Math.pow(L, 2);
+
+            I = Icm + m * Math.pow(b, 2);
+            T = 2 * Math.PI * Math.sqrt(I / (m * g * b));
+            maxE = m * g * b * (1 - Math.cos(angle));
+
+            resultsHtml = `• Inercia (I): ${I.toFixed(5)} kg·m²<br>• Suspensión (b): ${b.toFixed(3)} m<br>• Periodo (T): ${T.toFixed(3)} s`;
+        } else {
+            b = L; 
+            I = m * Math.pow(L, 2);
+            T = 2 * Math.PI * Math.sqrt(L / g);
+            maxE = m * g * L * (1 - Math.cos(angle));
+
+            resultsHtml = `• Longitud: ${L.toFixed(3)} m<br>• Masa: ${m.toFixed(3)} kg<br>• Periodo (T): ${T.toFixed(3)} s`;
+        }
+        
+        document.getElementById('results-text').innerHTML = resultsHtml;
+    }
+
+    function draw() {
+        const px = 250; // Centro X
+        const py = 100; // Centro Y del pivote
+        
+        // Escala dinámica para que todo quepa perfectamente grande
+        let maxDist = L;
+        let shape = document.getElementById('shape').value;
+        if (mode === 0) {
+            if (shape === 'barra') maxDist = Math.abs(b) + L/2;
+            else maxDist = Math.abs(b) + L; // El radio es L
+        }
+        let scale = 180 / (maxDist === 0 ? 1 : maxDist);
+
+        if(!paused) {
+			let speedMult = parseFloat(document.getElementById('simSpeed').value);
+			let dt = 0.016 * speedMult;
+            let restoringForce = (mode === 0) ? (-m * g * b * Math.sin(angle)) : (-m * g * Math.sin(angle));
+            let angleAcc = (mode === 0) ? (restoringForce / I) : (restoringForce / L);
+            
+            angleVel += angleAcc * dt;
+            angle += angleVel * dt;
+
+            if(history.length < 300) history.push(angle);
+
+            // Cálculos precisos para el rastro (siguiendo la punta inferior exacta)
+            let tipRadius = L; 
+            if (mode === 0) {
+                if (shape === 'barra') tipRadius = b + L/2;
+                else tipRadius = b + L;
+            }
+            
+            let tx = px + Math.sin(angle) * (tipRadius * scale);
+            let ty = py + Math.cos(angle) * (tipRadius * scale);
+            trail.push({x: tx, y: ty});
+            if(trail.length > 40) trail.shift();
+        }
+
+        pCtx.clearRect(0,0, pCanvas.width, pCanvas.height);
+
+        // DIBUJAR RASTRO (Progresivo y difuminado)
+        if (document.getElementById('trail').checked && trail.length > 1) {
+            for (let i = 0; i < trail.length - 1; i++) {
+                pCtx.beginPath();
+                let alpha = (i / trail.length) * 0.7; // Efecto desgaste
+                pCtx.strokeStyle = `rgba(0, 105, 62, ${alpha})`;
+                pCtx.lineWidth = 2 + (i / trail.length) * 3; 
+                pCtx.lineCap = 'round';
+                pCtx.moveTo(trail[i].x, trail[i].y);
+                pCtx.lineTo(trail[i+1].x, trail[i+1].y);
+                pCtx.stroke();
+            }
+        }
+
+        // DIBUJAR PÉNDULO
+        pCtx.save();
+        pCtx.translate(px, py);
+        pCtx.rotate(angle);
+        
+        if(mode === 0) {
+            pCtx.strokeStyle = "#333";
+            pCtx.lineWidth = 2;
+
+            if(shape === 'barra') {
+                pCtx.fillStyle = "rgba(0,0,0,0.07)";
+                pCtx.fillRect(-6, -(L/2-b)*scale + 6, 12, L*scale);
+                
+                let grad = pCtx.createLinearGradient(-6, 0, 6, 0);
+                grad.addColorStop(0, '#78909c'); grad.addColorStop(0.5, '#cfd8dc'); grad.addColorStop(1, '#78909c');
+                pCtx.fillStyle = grad;
+                pCtx.fillRect(-6, -(L/2-b)*scale, 12, L*scale);
+            } else {
+                // Barra rígida de conexión para el disco y el anillo
+                pCtx.beginPath(); pCtx.moveTo(0,0); pCtx.lineTo(0, b * scale); 
+                pCtx.lineWidth = 4; pCtx.strokeStyle = "#9e9e9e"; pCtx.stroke();
+                
+                if(shape === 'disco') {
+                    pCtx.lineWidth = 2; pCtx.strokeStyle = "#333";
+                    pCtx.beginPath(); pCtx.arc(0, b * scale, L * scale, 0, Math.PI * 2);
+                    let grad = pCtx.createRadialGradient(0, b * scale, 0, 0, b * scale, L * scale);
+                    grad.addColorStop(0, '#cfd8dc'); grad.addColorStop(1, '#78909c');
+                    pCtx.fillStyle = grad; pCtx.fill(); pCtx.stroke();
+                } else if(shape === 'anillo') {
+                    pCtx.beginPath(); pCtx.arc(0, b * scale, L * scale, 0, Math.PI * 2);
+                    pCtx.lineWidth = 10; pCtx.strokeStyle = '#78909c'; pCtx.stroke();
+                    pCtx.lineWidth = 2; pCtx.strokeStyle = '#333'; pCtx.stroke();
+                }
+            }
+            // Centro de Masa
+            pCtx.fillStyle = "#ff1744"; pCtx.beginPath(); pCtx.arc(0, b * scale, 5, 0, 7); pCtx.fill(); pCtx.stroke();
+            
+        } else {
+            // Péndulo Simple
+            pCtx.strokeStyle = "#555"; pCtx.lineWidth = 3;
+            pCtx.beginPath(); pCtx.moveTo(0,0); pCtx.lineTo(0, L * scale); pCtx.stroke();
+            
+            let grad = pCtx.createRadialGradient(3, L*scale - 3, 2, 0, L*scale, 18);
+            grad.addColorStop(0, '#ffa726'); grad.addColorStop(1, '#f57c00');
+            pCtx.fillStyle = grad;
+            pCtx.beginPath(); pCtx.arc(0, L * scale, 18, 0, 7); pCtx.fill();
+            pCtx.strokeStyle = "#333"; pCtx.lineWidth = 2; pCtx.stroke();
+        }
+        pCtx.restore();
+
+        // Dibujar Pivote
+        pCtx.fillStyle="#333"; pCtx.beginPath(); pCtx.arc(px, py, 6, 0, 7); pCtx.fill();
+
+        // ONDA CON CUADRÍCULA Y EJES
+        wCtx.clearRect(0,0, wCanvas.width, wCanvas.height);
+        
+        // Cuadrícula (Grid)
+        wCtx.strokeStyle = "#e0e0e0"; wCtx.lineWidth = 1;
+        for(let i = 0; i < wCanvas.width; i += 40) { wCtx.beginPath(); wCtx.moveTo(i, 0); wCtx.lineTo(i, wCanvas.height); wCtx.stroke(); }
+        for(let j = 0; j < wCanvas.height; j += 20) { wCtx.beginPath(); wCtx.moveTo(0, j); wCtx.lineTo(wCanvas.width, j); wCtx.stroke(); }
+        
+        // Ejes X y Y
+        let xAxisY = 70;
+        wCtx.strokeStyle = "#888"; wCtx.lineWidth = 2;
+        wCtx.beginPath(); wCtx.moveTo(0, xAxisY); wCtx.lineTo(wCanvas.width, xAxisY); wCtx.stroke(); // X
+        wCtx.beginPath(); wCtx.moveTo(40, 0); wCtx.lineTo(40, wCanvas.height); wCtx.stroke(); // Y
+        
+        // Etiquetas de Ejes
+        wCtx.fillStyle = "#444"; wCtx.font = "11px Arial";
+        wCtx.fillText("Tiempo (s)", wCanvas.width - 65, xAxisY - 5);
+        wCtx.fillText("θ (rad)", 5, 15);
+
+        // Línea Senoidal
+        wCtx.strokeStyle = mode === 0 ? "#00693e" : "#ffa726"; 
+        wCtx.lineWidth = 2.5; 
+        wCtx.beginPath();
+        history.forEach((a, i) => {
+            let xPos = 40 + i * 1.5;
+            if (xPos <= wCanvas.width) {
+                if (i === 0) wCtx.moveTo(xPos, xAxisY - a * 45);
+                else wCtx.lineTo(xPos, xAxisY - a * 45);
+            }
+        }); 
+        wCtx.stroke();
+
+        // ACTUALIZACIÓN DE ENERGÍAS
+        let u = m * g * b * (1 - Math.cos(angle));
+        let k = 0.5 * I * Math.pow(angleVel, 2);
+        let totalE = u + k;
+
+        let uPct = (totalE > 0) ? Math.round((u / totalE) * 100) : 0;
+        let kPct = (totalE > 0) ? Math.round((k / totalE) * 100) : 0;
+
+        document.getElementById('u-bar').style.height = Math.min(100, (u / maxE) * 100) + "%";
+        document.getElementById('k-bar').style.height = Math.min(100, (k / maxE) * 100) + "%";
+        
+        document.getElementById('u-pct').innerText = uPct + "%";
+        document.getElementById('k-pct').innerText = kPct + "%";
+        document.getElementById('e-pct').innerText = "100%";
+        
+        document.getElementById('u-val').innerText = u.toFixed(3) + " J";
+        document.getElementById('k-val').innerText = k.toFixed(3) + " J";
+        document.getElementById('e-val').innerText = totalE.toFixed(3) + " J";
+
+        document.getElementById('angle-display').innerText = "θ: " + (angle * 180 / Math.PI).toFixed(1) + "°";
+
+        requestAnimationFrame(draw);
+    }
+
+    updateCalculations();
+    draw();
+</script>
+</body>
+</html>
